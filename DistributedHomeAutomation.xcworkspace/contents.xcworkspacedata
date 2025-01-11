@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Workspace
+   version = "1.0">
+   <FileRef
+      location = "group:HomeKitAdapter/HomeKitAdapter.xcodeproj">
+   </FileRef>
+   <FileSystemSynchronizedGroup
+      location = "group:Packages"
+      name = "Packages">
+   </FileSystemSynchronizedGroup>
+</Workspace>
