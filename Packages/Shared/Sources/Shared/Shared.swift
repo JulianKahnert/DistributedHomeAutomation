@@ -29,20 +29,21 @@ public struct Command: Codable {
 }
 
 // TODO: delete this
-import WebSocketActors
-
-extension NodeIdentity {
-    public static let server = NodeIdentity(id: "server")
-    public static let node = NodeIdentity(id: "node")
-}
-
-extension ActorIdentity {
-    public static let homeKitAdater = ActorIdentity(id: "homeKitAdater", node: .server)
-    public static let eventHandler = ActorIdentity(id: "eventHandler", node: .node)
-}
+//import WebSocketActors
+//import DistributedCluster
+//
+//extension NodeIdentity {
+//    public static let server = NodeIdentity(id: "server")
+//    public static let node = NodeIdentity(id: "node")
+//}
+//
+//extension ActorIdentity {
+//    public static let homeKitAdater = ActorIdentity(id: "homeKitAdater", node: .server)
+//    public static let eventHandler = ActorIdentity(id: "eventHandler", node: .node)
+//}
 
 public distributed actor HomeKitAdapter {
-    public typealias ActorSystem = WebSocketActorSystem
+//    public typealias ActorSystem = WebSocketActorSystem
     
     public distributed func greet(name: String) -> String {
         return "Hello, \(name)!"
@@ -56,10 +57,22 @@ public distributed actor HomeKitAdapter {
 //    }
 }
 
+import Distributed
+import DistributedCluster
+
+typealias DefaultDistributedActorSystem = ClusterSystem
+
 public distributed actor HomeEventHandler {
-    public typealias ActorSystem = WebSocketActorSystem
-    
     public distributed func handle(event: String) {
         print("Receiving event that will be handled: \(event)")
+    }
+}
+
+public extension DistributedReception.Key {
+    static var homeKitAdater: DistributedReception.Key<HomeKitAdapter> {
+        "homeKitAdater"
+    }
+    static var homeEventHandler: DistributedReception.Key<HomeEventHandler> {
+        "homeEventHandler"
     }
 }

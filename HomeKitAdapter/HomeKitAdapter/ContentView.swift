@@ -5,11 +5,11 @@
 //  Created by Julian Kahnert on 11.01.25.
 //
 
+import DistributedCluster
 import SwiftUI
 import Shared
 
-let address = ServerAddress(scheme: .insecure, host: "localhost", port: 8888)
-let webSocketActorSystem = WebSocketActorSystem(id: .node)
+var globalSystem: ClusterSystem?
 
 struct ContentView: View {
     var body: some View {
@@ -31,20 +31,21 @@ struct ContentView: View {
                 }
                 .padding()
             }
-            Button("Shutdown") {
+            Button("Connect") {
                 Task {
-                    await webSocketActorSystem.shutdownGracefully()
+                    globalSystem!.cluster.join(host: "0.0.0.0", port: 7117)
                 }
             }
         }
         .task {
             
+            let system = await ClusterSystem("HomeAutomation-Server", settings: .init(name: "HomeAutomation-Server", host: "0.0.0.0", port: 7227))
+            system.cluster.join(host: "0.0.0.0", port: 7117)
+
+            let actor = HomeEventHandler(actorSystem: system)
+            await system.receptionist.checkIn(actor, with: .homeEventHandler)
             
-            try! await webSocketActorSystem.connectClient(to: address)
-            
-            _ = webSocketActorSystem.makeLocalActor(id: .eventHandler) {
-                HomeEventHandler(actorSystem: webSocketActorSystem)
-            }
+            globalSystem = system
         }
     }
 }
@@ -52,21 +53,29 @@ struct ContentView: View {
 import WebSocketActors
 func runLoop() async throws {
     
-    // TODO: there should be something that tries to start a connection
-//    try! await webSocketActorSystem.connectClient(to: address)
-
-    let greeter = try HomeKitAdapter.resolve(id: .homeKitAdater, using: webSocketActorSystem)
+//    let system = await ClusterSystem("HomeAutomation-Server", settings: .init(name: "HomeAutomation-Server", host: "0.0.0.0", port: 7227))
+//    system.cluster.join(host: "0.0.0.0", port: 7117)
+//
+//    let actor = HomeEventHandler(actorSystem: system)
+//    await system.receptionist.checkIn(actor, with: .homeEventHandler)
+//    
+//    try await Task.sleep(for: .seconds(1))
+    
+    let system = globalSystem!
+    
+    let greeter = await system.receptionist.lookup(.homeKitAdater).first!
+    
     let greeting = try await greeter.greet(name: "Alice")
     print(greeting)
     
     try await greeter.handle(command: "test 1")
-//    try await Task.sleep(for: .seconds(1))
-//    
-//    try await greeter.handle(command: "test 2")
-//    try await Task.sleep(for: .seconds(1))
-//
-//    try await greeter.handle(command: "test 3")
-//    try await Task.sleep(for: .seconds(1))
+    try await Task.sleep(for: .seconds(1))
+    
+    try await greeter.handle(command: "test 2")
+    try await Task.sleep(for: .seconds(1))
+
+    try await greeter.handle(command: "test 3")
+    try await Task.sleep(for: .seconds(1))
 }
 
 #Preview {

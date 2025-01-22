@@ -16,7 +16,8 @@ let package = Package(
             targets: ["Shared"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/samalone/websocket-actor-system.git", from: "1.0.0")
+        .package(url: "https://github.com/samalone/websocket-actor-system.git", from: "1.0.0"),
+        .package(url: "https://github.com/apple/swift-distributed-actors", branch: "main")
     ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
@@ -24,7 +25,8 @@ let package = Package(
         .target(
             name: "Shared",
             dependencies: [
-                .product(name: "WebSocketActors", package: "websocket-actor-system")
+                .product(name: "WebSocketActors", package: "websocket-actor-system"),
+                .product(name: "DistributedCluster", package: "swift-distributed-actors")
             ]),
     ]
 )
