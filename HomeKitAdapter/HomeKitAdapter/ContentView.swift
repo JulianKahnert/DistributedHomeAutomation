@@ -7,20 +7,19 @@
 
 import SwiftUI
 import Shared
+import WebSocketActors
 
 let address = ServerAddress(scheme: .insecure, host: "localhost", port: 8888)
-let webSocketActorSystem = WebSocketActorSystem(id: .node)
+let webSocketActorSystem = WebSocketActorSystem(id: .homeKitAdapter)
 
 struct ContentView: View {
     var body: some View {
         HStack {
             Button {
                 Task {
-                    do {
-                        try await runLoop()
-                    } catch {
-                        print(error)
-                    }
+                    let receiver = try HomeKitEventReceiver.resolve(id: .homeKitEventReceiver, using: webSocketActorSystem)
+                    
+                    _ = try! await receiver.process(event: "catalyst")
                 }
             } label: {
                 VStack {
@@ -36,37 +35,11 @@ struct ContentView: View {
                     await webSocketActorSystem.shutdownGracefully()
                 }
             }
-        }
-        .task {
-            
-            
-            try! await webSocketActorSystem.connectClient(to: address)
-            
-            _ = webSocketActorSystem.makeLocalActor(id: .eventHandler) {
-                HomeEventHandler(actorSystem: webSocketActorSystem)
+            .task {
+                try! await webSocketActorSystem.connectClient(to: address)
             }
         }
     }
-}
-
-import WebSocketActors
-func runLoop() async throws {
-    
-    // TODO: there should be something that tries to start a connection
-//    try! await webSocketActorSystem.connectClient(to: address)
-
-    let greeter = try HomeKitAdapter.resolve(id: .homeKitAdater, using: webSocketActorSystem)
-    let greeting = try await greeter.greet(name: "Alice")
-    print(greeting)
-    
-    try await greeter.handle(command: "test 1")
-//    try await Task.sleep(for: .seconds(1))
-//    
-//    try await greeter.handle(command: "test 2")
-//    try await Task.sleep(for: .seconds(1))
-//
-//    try await greeter.handle(command: "test 3")
-//    try await Task.sleep(for: .seconds(1))
 }
 
 #Preview {
