@@ -9,73 +9,55 @@ import DistributedCluster
 import SwiftUI
 import Shared
 
-var globalSystem: ClusterSystem?
+var actorSystem: ClusterSystem!
+var actor: HomeCommandHandler!
 
 struct ContentView: View {
     var body: some View {
         HStack {
-            Button {
-                Task {
-                    do {
-                        try await runLoop()
-                    } catch {
-                        print(error)
-                    }
-                }
-            } label: {
-                VStack {
-                    Image(systemName: "globe")
-                        .imageScale(.large)
-                        .foregroundStyle(.tint)
-                    Text("Hello, world!")
-                }
-                .padding()
-            }
             Button("Connect") {
                 Task {
-                    globalSystem!.cluster.join(host: "0.0.0.0", port: 7117)
+                    // MARK: - Step 5
+                    actorSystem.cluster.join(host: "0.0.0.0", port: 8888)
+                    try await actorSystem.cluster.joined(within: .seconds(2))
+                    print("******** join called")
+                }
+            }
+            
+            Button("Send event") {
+                Task {
+                    // MARK: - Step 6
+                    let serverActor = await actorSystem!.receptionist.lookup(.homeEventHandler).first!
+                    do {
+                        print("******** send start \(Date().ISO8601Format(.init(includingFractionalSeconds: true)))")
+                        // MARK: - Step 7
+                        try await serverActor.handle(event: "Hello from App!")
+                        print("******** send success")
+                    } catch {
+                        print("******** send failed \(error)")
+                    }
                 }
             }
         }
         .task {
             
-            let system = await ClusterSystem("HomeAutomation-Server", settings: .init(name: "HomeAutomation-Server", host: "0.0.0.0", port: 7227))
-            system.cluster.join(host: "0.0.0.0", port: 7117)
-
-            let actor = HomeEventHandler(actorSystem: system)
-            await system.receptionist.checkIn(actor, with: .homeEventHandler)
+            // MARK: - Step 3
+            var settings = ClusterSystemSettings(name: "HomeAutomation-App", host: "0.0.0.0", port: 7777)
+            // uncomment when you want to use ServiceDiscovery
+            //settings.discovery = ServiceDiscoverySettings(static: [.init(host: "0.0.0.0", port: 7777), .init(host: "0.0.0.0", port: 8888)])
+            actorSystem = await ClusterSystem("HomeAutomation-App", settings: settings)
             
-            globalSystem = system
+            // MARK: - Step 4
+            actor = HomeCommandHandler(actorSystem: actorSystem)
+            await actorSystem.receptionist.checkIn(actor, with: .homeCommandHandler)
+
+            Task {
+                for await event in actorSystem.cluster.events {
+                    print("******** event \(event)")
+                }
+            }
         }
     }
-}
-
-import WebSocketActors
-func runLoop() async throws {
-    
-//    let system = await ClusterSystem("HomeAutomation-Server", settings: .init(name: "HomeAutomation-Server", host: "0.0.0.0", port: 7227))
-//    system.cluster.join(host: "0.0.0.0", port: 7117)
-//
-//    let actor = HomeEventHandler(actorSystem: system)
-//    await system.receptionist.checkIn(actor, with: .homeEventHandler)
-//    
-//    try await Task.sleep(for: .seconds(1))
-    
-    let system = globalSystem!
-    
-    let greeter = await system.receptionist.lookup(.homeKitAdater).first!
-    
-    let greeting = try await greeter.greet(name: "Alice")
-    print(greeting)
-    
-    try await greeter.handle(command: "test 1")
-    try await Task.sleep(for: .seconds(1))
-    
-    try await greeter.handle(command: "test 2")
-    try await Task.sleep(for: .seconds(1))
-
-    try await greeter.handle(command: "test 3")
-    try await Task.sleep(for: .seconds(1))
 }
 
 #Preview {

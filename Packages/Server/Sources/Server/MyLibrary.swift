@@ -3,48 +3,29 @@
 
 import Shared
 import DistributedCluster
-//import WebSocketActors
 
 @main
 struct Main {
     static func main() async throws {
         
-        let system = await ClusterSystem("HomeAutomation-Server", settings: .init(name: "HomeAutomation-Server", host: "0.0.0.0", port: 7117))
-//        let system = await ClusterSystem("Node-A") { settings in
-//            settings.bindPort = 7227
-//            settings.logging.logLevel = .debug
-//            settings.onDownAction = .gracefulShutdown(delay: .seconds(10))
-////            settings.plugins.install(plugin: .)
-//        }
+        // MARK: - Step 1
+        var settings = ClusterSystemSettings(name: "HomeAutomation", host: "0.0.0.0", port: 8888)
+        // uncomment when you want to use ServiceDiscovery
+        //settings.discovery = ServiceDiscoverySettings(static: [.init(host: "0.0.0.0", port: 7777), .init(host: "0.0.0.0", port: 8888)])
+        let system = await ClusterSystem("HomeAutomation", settings: settings)
         
-//        let node = Cluster.Node(host: "0.0.0.0", port: 7117)
-//        system.cluster.join(node: node)
-//        try await system.cluster.waitFor(node, .up, within: .seconds(10))
-//        system.cluster.join(host: "0.0.0.0", port: 7117)
+        // MARK: - Step 2
+        let actor = HomeEventHandler(actorSystem: system)
+        await system.receptionist.checkIn(actor, with: .homeEventHandler)
         
-        let actor = HomeKitAdapter(actorSystem: system)
-        await system.receptionist.checkIn(actor, with: .homeKitAdater)
-        
-        
-        try await Task.sleep(for: .seconds(10))
-        let eventHandler = await system.receptionist.lookup(.homeEventHandler).first!
         Task {
-            do {
-                try await eventHandler.handle(event: "event 1")
-                try await Task.sleep(for: .seconds(1))
-                
-                try await eventHandler.handle(event: "event 2")
-                try await Task.sleep(for: .seconds(1))
-                
-                try await eventHandler.handle(event: "event 3")
-            } catch {
-                print(error)
+            for await event in system.cluster.events {
+                print("******** event \(event)")
             }
         }
         
-        print("Server Running")
-        
-
+        print("******** Server Running")
         try await system.terminated
+        print("******** Server stopped")
     }
 }

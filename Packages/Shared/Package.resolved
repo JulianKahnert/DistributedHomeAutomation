@@ -1,6 +1,15 @@
 {
-  "originHash" : "e21f363d78d14103ef7792300d70358e089c3088ffc7292b0c3915bb631b01ce",
+  "originHash" : "28dcc8dd2a174bc7e44e487ece397a186a9a76db5916ce2d0292ea1ebae4f5f1",
   "pins" : [
+    {
+      "identity" : "nio-async-websockets",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/samalone/nio-async-websockets",
+      "state" : {
+        "revision" : "a50f5f4d1c0446d36b2bd3b157f7f845e1f0133e",
+        "version" : "1.0.1"
+      }
+    },
     {
       "identity" : "swift-async-algorithms",
       "kind" : "remoteSourceControl",
@@ -119,6 +128,15 @@
       }
     },
     {
+      "identity" : "swift-nio-transport-services",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-nio-transport-services.git",
+      "state" : {
+        "revision" : "3c394067c08d1225ba8442e9cffb520ded417b64",
+        "version" : "1.23.1"
+      }
+    },
+    {
       "identity" : "swift-protobuf",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-protobuf.git",
@@ -143,6 +161,15 @@
       "state" : {
         "revision" : "c8a44d836fe7913603e246acab7c528c2e780168",
         "version" : "1.4.0"
+      }
+    },
+    {
+      "identity" : "websocket-actor-system",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/samalone/websocket-actor-system.git",
+      "state" : {
+        "revision" : "ca2c25e5702336123f8aa073e9c344fe6befc97c",
+        "version" : "1.1.0"
       }
     }
   ],
